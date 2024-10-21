@@ -185,7 +185,10 @@ const dmMachine = setup({
       ]);
     }),
     fhListen: fromPromise<any, null>(async () => {
-      return Promise.all([fhListen(),thinkingGesture()]);
+      return Promise.all([fhListen()]);
+    }),
+    fhaudio: fromPromise<any, null>(async () => {
+      return Promise.all([thinkingGesture()]);
     }),
     fhEnding: fromPromise<any, null>(async () => {
       return Promise.all([
@@ -239,6 +242,15 @@ const dmMachine = setup({
      },
     },
     Recognised: {
+      invoke: {
+        src: "fhaudio",
+        onDone: {
+          target: "Reply",
+          actions: ({ event }) => console.log(event.output),
+        },
+      }
+    },
+    Reply: {
       invoke: {
         src: "speakG",
         input: {text: "Haha That's funny. I dreamt that I was trapped in a robot with only a head, and talk only what programmers tell me to say. What a nice Halloween dream!"}, 
