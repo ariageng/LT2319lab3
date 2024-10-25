@@ -166,7 +166,7 @@ const dmMachine = setup({
   actors: {
     fhHello: fromPromise<any, null>(async () => {
       return Promise.all([
-        fhSay("Oh hey. Glad that you woke me up. I just had a bizarre dream. Can you guess what I just dreamt of?"),fhGesture("BigSmile")
+        fhSay("Oh hey. Glad that you woke me up. I just had a bizarre dream. Can you guess what I just dreamt of?"),fhGesture("BigSmile"),playAudio()
       ]);
     }),
     //fhL: fromPromise<any, null>(async () => {
@@ -192,7 +192,7 @@ const dmMachine = setup({
       ]);
     }),
     fhListen: fromPromise<any, null>(async () => {
-      return Promise.all([fhListen(),thinkingGesture(),playAudio()]);
+      return Promise.all([fhListen(),thinkingGesture()]);
     }),
   },
 }).createMachine({
