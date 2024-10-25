@@ -142,26 +142,32 @@ async function fhGesture(text: string) {
 async function fhListen() {
   const myHeaders = new Headers();
   myHeaders.append("accept", "application/json");
-  return Promise.all([fetch(`http://${FURHATURI}/furhat/listen`, { 
+  return fetch(`http://${FURHATURI}/furhat/listen`, { 
     method: "GET",
     headers: myHeaders,
   })
     .then((response) => response.body)
     .then((body) => body.getReader().read())
     .then((reader) => reader.value)
-    .then((value) => JSON.parse(new TextDecoder().decode(value)).message),
-    fetch(`http://${FURHATURI}/furhat/say?url=https://furhat-audio.s3.eu-north-1.amazonaws.com/suspense.wav&blocking=false`, {
-      method: "POST",
-      headers: myHeaders,
-      body: "",
-    })
-  ]);
+    .then((value) => JSON.parse(new TextDecoder().decode(value)).message);
+}
+
+async function playAudio() {
+  const myHeaders = new Headers();
+  myHeaders.append("accept", "application/json");
+  return fetch(`http://${FURHATURI}/furhat/say?url=https://furhat-audio.s3.eu-north-1.amazonaws.com/suspense.wav&blocking=false`, {
+    method: "POST",
+    headers: myHeaders,
+    body: "",
+  });
 }
 
 const dmMachine = setup({
   actors: {
     fhHello: fromPromise<any, null>(async () => {
-      return fhSay("Oh hey. Glad that you woke me up. I just had a bizarre dream. Can you guess what I just dreamt of?"),fhGesture("BigSmile");
+      return Promise.all([
+        fhSay("Oh hey. Glad that you woke me up. I just had a bizarre dream. Can you guess what I just dreamt of?"),fhGesture("BigSmile")
+      ]);
     }),
     //fhL: fromPromise<any, null>(async () => {
     // return fhListen();
@@ -171,6 +177,7 @@ const dmMachine = setup({
       return Promise.all([ //need to add Promise.all to return multiple actions
         fhSay(input.text),
         //fhGesture("Nod"),
+        spaceoutGesture(),
       ]);
     }),
     fhUser: fromPromise<any, null>(async () => {
@@ -179,21 +186,13 @@ const dmMachine = setup({
       ]);
     }),
     fhTrack: fromPromise<any, null>(async () => {
-      return Promise.all([
+      return Promise.all([ 
         fhTrackUser(),
         fhGesture("Smile"),
       ]);
     }),
     fhListen: fromPromise<any, null>(async () => {
-      return Promise.all([fhListen()]);
-    }),
-    fhaudio: fromPromise<any, null>(async () => {
-      return Promise.all([thinkingGesture()]);
-    }),
-    fhEnding: fromPromise<any, null>(async () => {
-      return Promise.all([
-        spaceoutGesture(),
-      ]);
+      return Promise.all([fhListen(),thinkingGesture(),playAudio()]);
     }),
   },
 }).createMachine({
@@ -243,15 +242,6 @@ const dmMachine = setup({
     },
     Recognised: {
       invoke: {
-        src: "fhaudio",
-        onDone: {
-          target: "Reply",
-          actions: ({ event }) => console.log(event.output),
-        },
-      }
-    },
-    Reply: {
-      invoke: {
         src: "speakG",
         input: {text: "Haha That's funny. I dreamt that I was trapped in a robot with only a head, and talk only what programmers tell me to say. What a nice Halloween dream!"}, 
         onDone: {
@@ -260,22 +250,8 @@ const dmMachine = setup({
         },
       }
     },
-    Done: {
-      invoke: {
-        src: "fhEnding",
-        input: null,
-        onDone: {
-          target: "End",
-          actions: ({ event }) => console.log(event.output),
-        },
-      },
-    },
-    End: {
-      type: "final",
-    },
-    Fail: {
-      type: "final",
-    },
+    Done: {},
+    Fail: {},
   },
 });
 
